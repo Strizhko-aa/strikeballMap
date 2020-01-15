@@ -1,18 +1,40 @@
 <template>
   <div>
     <div class="min-w-screen min-h-screen" id="my-map"></div>
+    <popup v-show="showSetCount">
+      <label class="block text-gray-700 text-sm font-bold mb-2" for="username">
+        Количество
+      </label>
+      <input v-model="countInMark" autofocus class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="username" type="text" placeholder="1">
+      <div class="w-full">
+        <button @click="setCountInMark()" class="my-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-5/12" type="button">
+          ОК
+        </button>
+        <button @click="deleteMark()" class="my-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-5/12 float-right" type="button">
+          Удалить метку
+        </button>
+      </div>
+    </popup>
   </div>
 </template>
 
 <script>
+import Popup from '@/components/common/Popup'
+
 const ymaps = window.ymaps
 
 export default {
   name: 'map-component',
+  components: {
+    'popup': Popup
+  },
   data () {
     return {
       myMap: null,
-      mapState: 'default' // addMark
+      mapState: 'default', // addMark
+      showSetCount: false,
+      countInMark: '',
+      activeMark: null
     }
   },
   mounted () {
@@ -22,6 +44,22 @@ export default {
     // }, 2000)
   },
   methods: {
+    deleteMark () {
+      this.myMap.removeOverlay(this.activeMark)
+      this.setShowSetCount(false)
+    },
+
+    setCountInMark () {
+      this.activeMark.properties.set({
+        iconContent: this.countInMark
+      })
+      this.setShowSetCount(false)
+    },
+
+    setShowSetCount (val) {
+      this.showSetCount = val
+    },
+
     initComponent () {
       this.initMap()
       this.initControls()
@@ -82,28 +120,26 @@ export default {
 
     addMark (coords) {
       let _myPlacemark = new ymaps.Placemark(coords, {
-        // hintContent: 'Собственный значок метки',
-        // balloonContent: 'Это красивая метка'
-        iconContent: '12'
+        iconContent: ''
       }, {
         preset: 'islands#redCircleIcon',
         draggable: true
-        // iconLayout: 'default#imageWithContent',
-        // // iconImageHref: '../../assets/img/red-point.png',
-        // // iconImageHref: 'https://www.pinclipart.com/picdir/middle/66-661221_file-vorschriftszeichen-1-svg-red-circle-logo-template.png',
-        // iconImageSize: [32, 32]
-        // // iconImageOffset: [-5, -38]
       })
+
+      let self = this
 
       _myPlacemark.events.add('click', function (e) {
-        let _mark = e.get('target')
-        _mark.properties.set({
-          iconContent: 55
-        })
+        self.activeMark = e.get('target')
+        self.setShowSetCount(true)
       })
+      this.activeMark = _myPlacemark
 
       this.myMap.geoObjects.add(_myPlacemark)
+      this.setShowSetCount(true)
     }
   }
 }
 </script>
+
+<style scoped>
+</style>
